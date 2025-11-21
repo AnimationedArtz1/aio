@@ -1,20 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { Landing } from './pages/Landing'
-import { Inbox } from './pages/Inbox'
-import { AgentEditor } from './pages/AgentEditor'
-import { WidgetConfig } from './pages/WidgetConfig'
+import { AppLayout } from '@/layouts/AppLayout'
+import { AgentEditor } from '@/pages/AgentEditor'
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/admin" element={<Navigate to="/admin/inbox" replace />} />
-        <Route path="/admin/inbox" element={<Inbox />} />
-        <Route path="/admin/agent-editor" element={<AgentEditor />} />
-        <Route path="/admin/widget-config" element={<WidgetConfig />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route element={<AppLayout />}>
+          <Route index element={<AgentEditor />} />
+        </Route>
       </Routes>
 
       <Toaster
@@ -22,23 +17,23 @@ function App() {
         toastOptions={{
           duration: 4000,
           style: {
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(12px)',
+            background: 'rgba(255, 255, 255, 0.05)',
+            backdropFilter: 'blur(20px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
             color: '#e2e8f0',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
-            borderRadius: '12px',
+            borderRadius: '16px',
+            padding: '16px',
           },
           success: {
             iconTheme: {
               primary: '#10b981',
-              secondary: 'white',
+              secondary: '#fff',
             },
           },
           error: {
             iconTheme: {
               primary: '#ef4444',
-              secondary: 'white',
+              secondary: '#fff',
             },
           },
         }}
@@ -46,5 +41,3 @@ function App() {
     </BrowserRouter>
   )
 }
-
-export default App

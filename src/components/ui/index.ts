@@ -1,7 +1,0 @@
-export { Button } from './Button'
-export { Card } from './Card'
-export { Input } from './Input'
-export { Select } from './Select'
-export { Slider } from './Slider'
-export { StatCard } from './StatCard'
-export { Textarea } from './Textarea'

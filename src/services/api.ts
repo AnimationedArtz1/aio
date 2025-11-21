@@ -1,79 +1,54 @@
-import type { AgentConfig, ChatLog, Stats, WidgetConfig } from '@/types'
+import axios, { AxiosError } from 'axios'
+import type { AgentConfig, ChatResponse } from '@/types'
 
-const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL
-const CHAT_WEBHOOK_URL = 'https://n8n.aio.web.tr/webhook/chat'
+const rawBaseUrl = import.meta.env.VITE_N8N_WEBHOOK_URL
 
-function ensureWebhookBase() {
-  if (!WEBHOOK_URL) {
-    throw new Error('VITE_N8N_WEBHOOK_URL tanımlı değil. Lütfen .env dosyasını kontrol edin.')
-  }
-  return WEBHOOK_URL.replace(/\/$/, '')
+if (!rawBaseUrl) {
+  throw new Error('VITE_N8N_WEBHOOK_URL environment variable is required')
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  const contentType = response.headers.get('content-type') ?? ''
-  const isJson = contentType.includes('application/json')
-  const payload = isJson ? await response.json() : await response.text()
+const sanitizedBaseUrl = rawBaseUrl.replace(/\/+$/, '')
 
-  if (!response.ok) {
-    const errorMessage = typeof payload === 'string' ? payload : payload?.message ?? 'Unknown error'
-    throw new Error(errorMessage)
+const client = axios.create({
+  baseURL: sanitizedBaseUrl,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 20000,
+})
+
+const resolveEndpoint = (path: string) => `${sanitizedBaseUrl}/${path.replace(/^\/+/, '')}`
+
+const extractErrorMessage = (error: unknown) => {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<{ message?: string }>
+    const message = axiosError.response?.data?.message || axiosError.message
+    return message || 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.'
   }
 
-  return payload as T
-}
+  if (error instanceof Error) {
+    return error.message
+  }
 
-async function request<T>(url: string, options?: RequestInit) {
-  const response = await fetch(url, options)
-  return handleResponse<T>(response)
+  return 'Bir hata oluştu. Lütfen bağlantınızı kontrol edin.'
 }
 
 export const api = {
-  async getChatLogs(): Promise<ChatLog[]> {
-    const baseUrl = ensureWebhookBase()
-    return request<ChatLog[]>(`${baseUrl}/get-logs`)
+  async updateAgent(payload: AgentConfig) {
+    try {
+      const response = await client.post(resolveEndpoint('/webhook/update-agent'), payload)
+      return response.data
+    } catch (error) {
+      throw new Error(extractErrorMessage(error))
+    }
   },
 
-  async getDashboardStats(): Promise<Stats> {
-    const baseUrl = ensureWebhookBase()
-    return request<Stats>(`${baseUrl}/stats`)
-  },
-
-  async updateAgentConfig(config: AgentConfig): Promise<{ success: boolean }> {
-    const baseUrl = ensureWebhookBase()
-    return request<{ success: boolean }>(`${baseUrl}/update-agent`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: config.name,
-        role_type: config.roleType,
-        model: config.model,
-        system_prompt: config.systemPrompt,
-        temperature: config.temperature,
-      }),
-    })
-  },
-
-  async updateWidgetConfig(payload: WidgetConfig): Promise<{ success: boolean }> {
-    const baseUrl = ensureWebhookBase()
-    return request<{ success: boolean }>(`${baseUrl}/update-widget`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
-  },
-
-  async sendChatMessage(message: string): Promise<{ reply: string }> {
-    return request<{ reply: string }>(CHAT_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message }),
-    })
+  async sendChatMessage(message: string): Promise<ChatResponse> {
+    try {
+      const response = await client.post(resolveEndpoint('/webhook/chat'), { message })
+      return response.data
+    } catch (error) {
+      throw new Error(extractErrorMessage(error))
+    }
   },
 }

@@ -3,15 +3,16 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { 
-  Phone, 
-  MessageSquare, 
-  Bot, 
-  TrendingUp, 
+import {
+  Phone,
+  MessageSquare,
+  Bot,
+  TrendingUp,
   ArrowRight,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
@@ -30,7 +31,7 @@ interface DashboardData {
   agent: {
     name: string;
     model: string;
-    twilio_phone_number: string | null;
+    verimor_did: string | null;
     system_prompt: string;
   } | null;
 }
@@ -54,7 +55,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-    
+
     fetchDashboard();
   }, []);
 
@@ -62,50 +63,70 @@ const Dashboard = () => {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-slate-400">Yükleniyor...</div>
+          <div className="flex items-center gap-3 text-slate-400">
+            <div className="w-5 h-5 border-2 border-electric-blue/30 border-t-electric-blue rounded-full animate-spin" />
+            <span>Yükleniyor...</span>
+          </div>
         </div>
       </DashboardLayout>
     );
   }
 
-  const quotaPercentage = data?.quota 
+  const quotaPercentage = data?.quota
     ? Math.round((data.quota.current_message_count / data.quota.monthly_message_limit) * 100)
     : 0;
 
-  const phoneNumber = data?.agent?.twilio_phone_number || data?.tenant?.phone_number;
+  // Use verimor_did from agent, fallback to tenant phone_number
+  const phoneNumber = data?.agent?.verimor_did || data?.tenant?.phone_number;
   const hasAgent = data?.agent && data.agent.system_prompt;
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.1, duration: 0.5 }
+    })
+  };
 
   return (
     <DashboardLayout>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
-          Hoş Geldin, {data?.tenant?.name || 'Kullanıcı'}
-        </h1>
-        <p className="text-slate-400">
-          İşletmenizin AI asistanını buradan yönetebilirsiniz.
-        </p>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+            Hoş Geldin, <span className="bg-clip-text text-transparent bg-gradient-to-r from-electric-blue to-neon-purple">{data?.tenant?.name || 'Kullanıcı'}</span>
+          </h1>
+          <p className="text-slate-400">
+            İşletmenizin AI asistanını buradan yönetebilirsiniz.
+          </p>
+        </motion.div>
       </div>
 
       {/* Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* Phone Status */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/5 rounded-xl border border-white/10 p-5"
+          custom={0}
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+          className="group relative rounded-2xl p-5 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/[0.06] hover:border-white/[0.1] transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-              <Phone size={20} className="text-green-400" />
+            <div className="w-11 h-11 rounded-xl bg-emerald-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Phone size={22} className="text-emerald-400" />
             </div>
             {phoneNumber ? (
-              <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">Aktif</span>
+              <span className="text-xs bg-emerald-500/15 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20">Aktif</span>
             ) : (
-              <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full">Bekliyor</span>
+              <span className="text-xs bg-amber-500/15 text-amber-400 px-2.5 py-1 rounded-full border border-amber-500/20">Bekliyor</span>
             )}
           </div>
-          <p className="text-sm text-slate-400 mb-1">Telefon Numarası</p>
+          <p className="text-sm text-slate-400 mb-1">Verimor Numarası</p>
           <p className="text-lg font-mono text-white">
             {phoneNumber || 'Atanmadı'}
           </p>
@@ -113,45 +134,49 @@ const Dashboard = () => {
 
         {/* Messages Used */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white/5 rounded-xl border border-white/10 p-5"
+          custom={1}
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+          className="group relative rounded-2xl p-5 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/[0.06] hover:border-white/[0.1] transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <MessageSquare size={20} className="text-blue-400" />
+            <div className="w-11 h-11 rounded-xl bg-electric-blue/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <MessageSquare size={22} className="text-electric-blue" />
             </div>
-            <span className="text-xs text-slate-500">{data?.quota?.plan_name?.toUpperCase()}</span>
+            <span className="text-xs text-slate-500 uppercase tracking-wide font-medium">{data?.quota?.plan_name}</span>
           </div>
           <p className="text-sm text-slate-400 mb-1">Kullanılan Mesaj</p>
           <p className="text-lg font-bold text-white">
             {data?.quota?.current_message_count?.toLocaleString() || 0}
             <span className="text-sm font-normal text-slate-500"> / {data?.quota?.monthly_message_limit?.toLocaleString()}</span>
           </p>
-          <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div 
-              className={`h-full transition-all ${quotaPercentage > 80 ? 'bg-red-500' : quotaPercentage > 50 ? 'bg-yellow-500' : 'bg-blue-500'}`}
-              style={{ width: `${Math.min(quotaPercentage, 100)}%` }}
+          <div className="mt-3 h-2 bg-white/[0.05] rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(quotaPercentage, 100)}%` }}
+              transition={{ duration: 1, delay: 0.3 }}
+              className={`h-full rounded-full ${quotaPercentage > 80 ? 'bg-red-500' : quotaPercentage > 50 ? 'bg-amber-500' : 'bg-electric-blue'}`}
             />
           </div>
         </motion.div>
 
         {/* Agent Status */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white/5 rounded-xl border border-white/10 p-5"
+          custom={2}
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+          className="group relative rounded-2xl p-5 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/[0.06] hover:border-white/[0.1] transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <Bot size={20} className="text-purple-400" />
+            <div className="w-11 h-11 rounded-xl bg-neon-purple/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Bot size={22} className="text-neon-purple" />
             </div>
             {hasAgent ? (
-              <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">Yapılandırıldı</span>
+              <span className="text-xs bg-emerald-500/15 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20">Yapılandırıldı</span>
             ) : (
-              <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded-full">Ayarla</span>
+              <span className="text-xs bg-amber-500/15 text-amber-400 px-2.5 py-1 rounded-full border border-amber-500/20">Ayarla</span>
             )}
           </div>
           <p className="text-sm text-slate-400 mb-1">AI Asistan</p>
@@ -162,14 +187,15 @@ const Dashboard = () => {
 
         {/* Today Calls */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white/5 rounded-xl border border-white/10 p-5"
+          custom={3}
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+          className="group relative rounded-2xl p-5 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/[0.06] hover:border-white/[0.1] transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-              <TrendingUp size={20} className="text-cyan-400" />
+            <div className="w-11 h-11 rounded-xl bg-cyan-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <TrendingUp size={22} className="text-cyan-400" />
             </div>
           </div>
           <p className="text-sm text-slate-400 mb-1">Bugünkü Aramalar</p>
@@ -185,15 +211,22 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white/5 rounded-xl border border-white/10 p-6"
+          className="rounded-2xl p-6 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/[0.06]"
         >
-          <h2 className="text-lg font-semibold text-white mb-4">Kurulum Durumu</h2>
-          <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-white mb-5 flex items-center gap-2">
+            <Sparkles size={20} className="text-electric-blue" />
+            Kurulum Durumu
+          </h2>
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               {phoneNumber ? (
-                <CheckCircle size={20} className="text-green-400" />
+                <div className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                  <CheckCircle size={16} className="text-emerald-400" />
+                </div>
               ) : (
-                <Clock size={20} className="text-yellow-400" />
+                <div className="w-6 h-6 rounded-full bg-amber-500/15 flex items-center justify-center">
+                  <Clock size={16} className="text-amber-400" />
+                </div>
               )}
               <span className={phoneNumber ? 'text-slate-300' : 'text-slate-400'}>
                 Telefon numarası {phoneNumber ? 'atandı' : 'bekleniyor'}
@@ -201,24 +234,30 @@ const Dashboard = () => {
             </div>
             <div className="flex items-center gap-3">
               {hasAgent ? (
-                <CheckCircle size={20} className="text-green-400" />
+                <div className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                  <CheckCircle size={16} className="text-emerald-400" />
+                </div>
               ) : (
-                <AlertCircle size={20} className="text-orange-400" />
+                <div className="w-6 h-6 rounded-full bg-amber-500/15 flex items-center justify-center">
+                  <AlertCircle size={16} className="text-amber-400" />
+                </div>
               )}
               <span className={hasAgent ? 'text-slate-300' : 'text-slate-400'}>
                 AI Asistan {hasAgent ? 'yapılandırıldı' : 'yapılandırılmalı'}
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <Clock size={20} className="text-slate-500" />
+              <div className="w-6 h-6 rounded-full bg-white/[0.05] flex items-center justify-center">
+                <Clock size={16} className="text-slate-500" />
+              </div>
               <span className="text-slate-400">İlk test araması yapılmadı</span>
             </div>
           </div>
 
           {!hasAgent && (
-            <Link 
+            <Link
               to="/dashboard/agent"
-              className="mt-4 flex items-center justify-center gap-2 w-full py-3 bg-electric-blue/20 text-electric-blue rounded-lg hover:bg-electric-blue/30 transition"
+              className="mt-6 flex items-center justify-center gap-2 w-full py-3 bg-electric-blue/10 text-electric-blue rounded-xl hover:bg-electric-blue/15 border border-electric-blue/20 transition-all font-medium"
             >
               AI Asistanı Yapılandır
               <ArrowRight size={18} />
@@ -231,31 +270,31 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-gradient-to-br from-electric-blue/10 to-neon-purple/10 rounded-xl border border-white/10 p-6"
+          className="rounded-2xl p-6 bg-gradient-to-br from-electric-blue/5 to-neon-purple/5 border border-white/[0.06]"
         >
-          <h2 className="text-lg font-semibold text-white mb-4">Nasıl Çalışır?</h2>
-          <ol className="space-y-4">
-            <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-electric-blue/20 text-electric-blue text-sm flex items-center justify-center">1</span>
-              <div>
-                <p className="text-white text-sm font-medium">Müşteri Arar</p>
-                <p className="text-slate-400 text-xs">Size atanan numarayı müşteriniz arar</p>
-              </div>
-            </li>
-            <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-electric-blue/20 text-electric-blue text-sm flex items-center justify-center">2</span>
-              <div>
-                <p className="text-white text-sm font-medium">AI Devreye Girer</p>
-                <p className="text-slate-400 text-xs">Yapay zeka asistanınız müşteriyle konuşur</p>
-              </div>
-            </li>
-            <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-electric-blue/20 text-electric-blue text-sm flex items-center justify-center">3</span>
-              <div>
-                <p className="text-white text-sm font-medium">Kayıt Tutulur</p>
-                <p className="text-slate-400 text-xs">Tüm konuşmalar kaydedilir ve raporlanır</p>
-              </div>
-            </li>
+          <h2 className="text-lg font-semibold text-white mb-5">Nasıl Çalışır?</h2>
+          <ol className="space-y-5">
+            {[
+              { step: 1, title: 'Müşteri Arar', desc: 'Size atanan numarayı müşteriniz arar' },
+              { step: 2, title: 'AI Devreye Girer', desc: 'Yapay zeka asistanınız müşteriyle konuşur' },
+              { step: 3, title: 'Kayıt Tutulur', desc: 'Tüm konuşmalar kaydedilir ve raporlanır' },
+            ].map((item, idx) => (
+              <motion.li
+                key={item.step}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 + idx * 0.1 }}
+                className="flex gap-4"
+              >
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-electric-blue/15 text-electric-blue text-sm font-medium flex items-center justify-center border border-electric-blue/20">
+                  {item.step}
+                </span>
+                <div>
+                  <p className="text-white text-sm font-medium">{item.title}</p>
+                  <p className="text-slate-400 text-xs">{item.desc}</p>
+                </div>
+              </motion.li>
+            ))}
           </ol>
         </motion.div>
       </div>
@@ -266,34 +305,37 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white/5 rounded-xl border border-white/10 p-6"
+          className="rounded-2xl p-6 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/[0.06]"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">AI Asistan Önizleme</h2>
-            <Link 
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <Bot size={20} className="text-neon-purple" />
+              AI Asistan Önizleme
+            </h2>
+            <Link
               to="/dashboard/agent"
-              className="text-sm text-electric-blue hover:underline"
+              className="text-sm text-electric-blue hover:text-electric-blue/80 font-medium transition-colors"
             >
               Düzenle
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-xs text-slate-500 mb-1">Asistan Adı</p>
-              <p className="text-white">{data.agent.name}</p>
+            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <p className="text-xs text-slate-500 mb-1.5">Asistan Adı</p>
+              <p className="text-white font-medium">{data.agent.name}</p>
             </div>
-            <div>
-              <p className="text-xs text-slate-500 mb-1">Model</p>
-              <p className="text-white">{data.agent.model}</p>
+            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <p className="text-xs text-slate-500 mb-1.5">Model</p>
+              <p className="text-white font-medium">{data.agent.model}</p>
             </div>
-            <div>
-              <p className="text-xs text-slate-500 mb-1">Telefon</p>
-              <p className="text-white font-mono">{data.agent.twilio_phone_number || '-'}</p>
+            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <p className="text-xs text-slate-500 mb-1.5">Verimor Telefon</p>
+              <p className="text-white font-mono">{data.agent.verimor_did || '-'}</p>
             </div>
           </div>
           {data.agent.system_prompt && (
-            <div className="mt-4 p-3 bg-black/20 rounded-lg">
-              <p className="text-xs text-slate-500 mb-1">Sistem Talimatı</p>
+            <div className="mt-4 p-4 rounded-xl bg-black/20 border border-white/[0.04]">
+              <p className="text-xs text-slate-500 mb-1.5">Sistem Talimatı</p>
               <p className="text-sm text-slate-300 line-clamp-2">{data.agent.system_prompt}</p>
             </div>
           )}

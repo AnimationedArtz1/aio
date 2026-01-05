@@ -44,7 +44,18 @@ const Landing: React.FC = () => {
               Müşterilerinizle 7/24 konuşan, satış yapan ve destek veren yapay zeka personeliniz.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/#pricing" className="w-full sm:w-auto">
+              <Link
+                to="/signup"
+                className="w-full sm:w-auto"
+                onClick={(e) => {
+                  // Aynı sayfadaysa pricing bölümüne scroll yap
+                  const pricingEl = document.getElementById('pricing');
+                  if (pricingEl) {
+                    e.preventDefault();
+                    pricingEl.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
                 <Button size="lg" className="w-full">
                   Paket satın al
                   <ArrowRight size={18} className="ml-2" />

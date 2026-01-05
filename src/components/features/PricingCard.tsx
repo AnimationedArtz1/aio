@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, Sparkles, ShoppingCart, Zap } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import type { Plan } from '@/types';
-import { paynetService } from '@/services/paynet';
 import { cn } from '@/lib/utils';
 
 interface PricingCardProps {
@@ -27,29 +27,12 @@ const PricingCard: React.FC<PricingCardProps> = ({
   onSuccess,
   className
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleBuy = async () => {
-    if (isLoading || disabled) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await paynetService.createCheckoutSession({
-        planId: plan.id as 'starter' | 'pro' | 'enterprise',
-      });
-
-      onSuccess?.(response.sessionId);
-
-      paynetService.redirect(response.redirectUrl);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Ödeme başlatılamadı. Lütfen tekrar deneyin.';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleBuy = () => {
+    if (disabled) return;
+    // Signup sayfasına yönlendir, planId ile
+    navigate(`/signup?planId=${plan.id}`);
   };
 
   return (
@@ -130,7 +113,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
         )}
 
         {/* CTA Button */}
-        <div className="mt-auto space-y-3">
+        <div className="mt-auto">
           <Button
             size="lg"
             className={cn(
@@ -139,16 +122,11 @@ const PricingCard: React.FC<PricingCardProps> = ({
             )}
             variant={highlight ? 'primary' : 'secondary'}
             onClick={handleBuy}
-            isLoading={isLoading}
-            disabled={isLoading || disabled}
+            disabled={disabled}
           >
             <ShoppingCart size={18} className="mr-2" />
             {disabled ? 'Mevcut Plan' : 'Satın Al'}
           </Button>
-
-          {error && (
-            <p className="text-sm text-red-400 text-center animate-fade-in">{error}</p>
-          )}
         </div>
       </div>
     </motion.div>
